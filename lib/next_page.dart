@@ -1,5 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:screenshot_callback/screenshot_callback.dart';
+import 'package:flutter_forbidshot/flutter_forbidshot.dart';
 
 class NextPage extends StatefulWidget {
   @override
@@ -7,40 +8,56 @@ class NextPage extends StatefulWidget {
 }
 
 class _NextPageState extends State<NextPage> {
-  ScreenshotCallback screenshotCallback = ScreenshotCallback();
-  @override
-  void initState() {
-    screenshotCallback.addListener(() {
-      print('Detected screenshot');
+  // Lines 12 to 31 and line 35 needed only for iOS
+  bool isCaptured = false;
+  StreamSubscription<void> subscription;
+  init() async {
+    bool isCapture = await FlutterForbidshot.iosIsCaptured;
+    setState(() {
+      isCaptured = isCapture;
     });
-    super.initState();
+    subscription = FlutterForbidshot.iosShotChange.listen((event) {
+      setState(() {
+        isCaptured = !isCaptured;
+      });
+    });
   }
 
   @override
   void dispose() {
-    screenshotCallback.dispose();
     super.dispose();
+    subscription?.cancel();
+  }
+
+  @override
+  void initState() {
+    init();
+    FlutterForbidshot.setAndroidForbidOn();
+    super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('Next Page'),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: Text('Go to the previous page'),
-            ),
-            ElevatedButton(
-              child: Text('Android forbidshot on'),
-              onPressed: () {},
-            ),
-          ],
+    return WillPopScope(
+      onWillPop: () async {
+        FlutterForbidshot.setAndroidForbidOff();
+        return true;
+      },
+      child: Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('Next Page'),
+              ElevatedButton(
+                onPressed: () {
+                  FlutterForbidshot.setAndroidForbidOff();
+                  Navigator.pop(context);
+                },
+                child: Text('Go to the previous page'),
+              ),
+            ],
+          ),
         ),
       ),
     );
