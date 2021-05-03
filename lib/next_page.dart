@@ -8,6 +8,7 @@ class NextPage extends StatefulWidget {
 }
 
 class _NextPageState extends State<NextPage> {
+
   // Lines 12 to 31 and line 35 needed only for iOS
   bool isCaptured = false;
   StreamSubscription<void> subscription;
